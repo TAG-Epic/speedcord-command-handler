@@ -27,7 +27,7 @@ class CommandHandler:
         for cog_attr_name in dir(extension):
             cog_attr = getattr(extension, cog_attr_name)
             if Cog in getattr(cog_attr, "__bases__", []):
-                self.logger.debug("Adding cog")
+                self.logger.debug("Adding cog \"%s\"")
                 await self.add_cog(cog_attr)
 
     async def add_cog(self, cog_uninitialized):
