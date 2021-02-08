@@ -2,6 +2,7 @@
 Created by Epic at 12/31/20
 """
 from logging import getLogger
+from speedcord.ext.typing.context import MessageContext
 
 
 class Cog:
@@ -14,17 +15,20 @@ class Cog:
         for attribute_name in dir(self):
             attr = getattr(self, attribute_name)
             if isinstance(attr, Command):
+                attr.cog = self
                 self.commands.append(attr)
 
 
 class Command:
     def __init__(self, func, name=None, *, description="\u200B", silent=False):
         self.func = func
+        self.cog = None  # Gets filled in by Cog
         self.name = name or func.__name__
         self.description = description
 
         self.data = {}
         self.options = getattr(func, "options", [])
+        self.options.reverse()
         self.silent = silent
 
     def export_slash_command(self):
@@ -33,6 +37,30 @@ class Command:
             "description": self.description,
             "options": [i.export() for i in self.options]
         }
+
+    def get_option(self, name):
+        for opt in self.options:
+            if opt.name == name:
+                return opt
+
+
+class CommandContext:
+    def __init__(self, **params):
+        self.command = params["command"]
+        self.is_slash_command = params["token"] is not None
+        self.token = params["token"]
+        self.params = params["params"]
+        self.client = params["client"]
+        self.disable_mentions = params["disable_mentions"]
+
+        self.message = MessageContext(self.client, params["data"])
+
+    async def send(self, content=None, **kwargs):
+        if content is not None:
+            kwargs["content"] = content
+        if self.disable_mentions and "allowed_mentions" not in kwargs.keys():
+            kwargs["allowed_mentions"] = {"parse": ["users"]}
+        await self.message.send(**kwargs)
 
 
 class Option:

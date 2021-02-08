@@ -1,7 +1,7 @@
 """
 Created by Epic at 12/31/20
 """
-from .types import Cog
+from .types import Cog, CommandContext
 
 from importlib import import_module
 from logging import getLogger
@@ -9,7 +9,7 @@ from speedcord.http import Route
 
 
 class CommandHandler:
-    def __init__(self, client, client_id, *, prefix=None, cogs_directory="cogs", guild_id=None):
+    def __init__(self, client, client_id, *, prefix=None, cogs_directory="cogs", guild_id=None, disable_mentions=True):
         self.client = client
         self.client_id = client_id
         self.logger = getLogger("speedian.command_handler")
@@ -21,6 +21,7 @@ class CommandHandler:
         self.commands = []
         self.guild_id = guild_id
         self.to_be_added = []
+        self.disable_mentions = disable_mentions
         self.client.event_dispatcher.register("INTERACTION_CREATE", self.interaction_create)
 
     def load_extension(self, extension_name):
@@ -67,9 +68,29 @@ class CommandHandler:
         self.logger.debug("Received interaction data %s" % data)
         token = data["token"]
         interaction_id = data["id"]
+        args = data["data"]["options"] or []
+        parsed_args = {opt["name"]: opt["value"] for opt in args}
         command = self.get_command(data["data"]["name"])
+
+        if command is None:
+            self.logger.warning("Slash command not found!")
+            return
 
         if not command.silent:
             r = Route("POST", "/interactions/{interaction_id}/{interaction_token}/callback",
                       interaction_id=interaction_id, interaction_token=token)
             await self.client.http.request(r, json={"type": 5})
+
+        new_args = {}
+
+        for name, value in parsed_args.items():
+            option = command.get_option(name)
+            if option.choices is not None:
+                new_args[name] = option.choices[value]["name"]
+                continue
+            new_args[name] = value
+
+        self.logger.debug("Command %s was ran" % command.name)
+        context = CommandContext(command=command, token=token, params=parsed_args, client=self.client, data=data,
+                                 disable_mentions=self.disable_mentions)
+        await command.func(command.cog, context, **new_args)
