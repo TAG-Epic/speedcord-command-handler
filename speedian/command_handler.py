@@ -68,7 +68,7 @@ class CommandHandler:
         self.logger.debug("Received interaction data %s" % data)
         token = data["token"]
         interaction_id = data["id"]
-        args = data["data"]["options"] or []
+        args = data["data"].get("options") or []
         parsed_args = {opt["name"]: opt["value"] for opt in args}
         command = self.get_command(data["data"]["name"])
 

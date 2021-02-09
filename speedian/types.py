@@ -60,7 +60,7 @@ class CommandContext:
             kwargs["content"] = content
         if self.disable_mentions and "allowed_mentions" not in kwargs.keys():
             kwargs["allowed_mentions"] = {"parse": ["users"]}
-        await self.message.send(**kwargs)
+        return await self.message.send(**kwargs)
 
 
 class Option:
