@@ -64,6 +64,10 @@ class CommandHandler:
                 return command
 
     async def interaction_create(self, data, shard):
+        if data is None:
+            self.logger.warning("Discord sent us incomplete data!")
+            return
+
         self.logger.debug("Received interaction data %s" % data)
         token = data["token"]
         interaction_id = data["id"]
@@ -92,4 +96,8 @@ class CommandHandler:
         self.logger.debug("Command %s was ran" % command.name)
         context = CommandContext(command=command, token=token, params=parsed_args, client=self.client, data=data,
                                  disable_mentions=self.disable_mentions)
-        await command.func(command.cog, context, **new_args)
+        try:
+            await command.func(command.cog, context, **new_args)
+        except Exception as e:
+            self.logger.error("An error occurred while running %s" % command.name, exc_info=e)
+            await context.send("Uh oh, an error occurred while running your command.")
