@@ -56,8 +56,7 @@ class CommandHandler:
             r = Route("PUT", "/applications/{application_id}/guilds/{guild_id}/commands", application_id=self.client_id,
                       guild_id=self.guild_id)
         self.logger.debug("Pushing commands")
-        r = await self.client.http.request(r, json=self.to_be_added)
-        self.logger.debug(await r.json())
+        await self.client.http.request(r, json=self.to_be_added)
 
     def get_command(self, command_name):
         for command in self.commands:
