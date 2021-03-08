@@ -3,6 +3,7 @@ Created by Epic at 12/31/20
 """
 from logging import getLogger
 from speedcord.ext.typing.context import MessageContext
+from speedcord.http import Route
 
 
 class Cog:
@@ -52,6 +53,7 @@ class CommandContext:
         self.params = params["params"]
         self.client = params["client"]
         self.disable_mentions = params["disable_mentions"]
+        self.client_id = params["client_id"]
 
         self.message = MessageContext(self.client, params["data"])
 
@@ -60,7 +62,13 @@ class CommandContext:
             kwargs["content"] = content
         if self.disable_mentions and "allowed_mentions" not in kwargs.keys():
             kwargs["allowed_mentions"] = {"parse": ["users"]}
-        return await self.message.send(**kwargs)
+
+        if self.command.silent:
+            kwargs["flags"] = 64
+        self.client.logger.info(kwargs)
+        r = Route("POST", "/webhooks/{application_id}/{interaction_token}", application_id=self.client_id,
+                  interaction_token=self.token)
+        return await self.client.http.request(r, json=kwargs)
 
 
 class Option:

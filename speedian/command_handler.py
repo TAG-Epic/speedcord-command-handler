@@ -23,6 +23,8 @@ class CommandHandler:
         self.to_be_added = []
         self.disable_mentions = disable_mentions
         self.client.event_dispatcher.register("INTERACTION_CREATE", self.interaction_create)
+        self.initial_created = False
+        self.loop.create_task(self.push_commands())
 
     def load_extension(self, extension_name):
         self.loop.create_task(self._load_extension(extension_name))
@@ -41,7 +43,8 @@ class CommandHandler:
         for command in cog.commands:
             self.commands.append(command)
             self.create_command(command)
-        await self.push_commands()
+        if self.initial_created:
+            await self.push_commands()
 
     def create_command(self, command):
         data = command.export_slash_command()
@@ -50,6 +53,7 @@ class CommandHandler:
 
     async def push_commands(self):
         await self.client.connected.wait()
+        self.initial_created = True
         if self.guild_id is None:
             r = Route("PUT", "/applications/{application_id}/commands", application_id=self.client_id)
         else:
@@ -79,10 +83,14 @@ class CommandHandler:
             self.logger.warning("Slash command not found!")
             return
 
-        if not command.silent:
-            r = Route("POST", "/interactions/{interaction_id}/{interaction_token}/callback",
-                      interaction_id=interaction_id, interaction_token=token)
-            await self.client.http.request(r, json={"type": 5})
+        # Add a thinking response
+        interaction_response_data = {"type": 5}
+        if command.silent:
+            interaction_response_data["flags"] = 64
+
+        r = Route("POST", "/interactions/{interaction_id}/{interaction_token}/callback",
+                  interaction_id=interaction_id, interaction_token=token)
+        await self.client.http.request(r, json=interaction_response_data)
 
         new_args = {}
 
@@ -95,9 +103,8 @@ class CommandHandler:
 
         self.logger.debug("Command %s was ran" % command.name)
         context = CommandContext(command=command, token=token, params=parsed_args, client=self.client, data=data,
-                                 disable_mentions=self.disable_mentions)
+                                 disable_mentions=self.disable_mentions, client_id=self.client_id)
         try:
             await command.func(command.cog, context, **new_args)
         except Exception as e:
             self.logger.error("An error occurred while running %s" % command.name, exc_info=e)
-            await context.send("Uh oh, an error occurred while running your command.")
