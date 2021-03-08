@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name="speedian",
-    version="1.0.2",
+    version="1.1.0",
     description="A speedcord command handler",
     long_description="A speedcord command handler",
     author="tag-epic",
