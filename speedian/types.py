@@ -66,9 +66,9 @@ class CommandContext:
         if self.command.silent:
             kwargs["flags"] = 64
         self.client.logger.info(kwargs)
-        r = Route("POST", "/webhooks/{application_id}/{interaction_token}", application_id=self.client_id,
+        r = Route("POST", "/interactions/{application_id}/{interaction_token}/callback", application_id=self.client_id,
                   interaction_token=self.token)
-        return await self.client.http.request(r, json=kwargs)
+        return await self.client.http.request(r, json={"type": 4, "data": kwargs)
 
 
 class Option:
