@@ -68,7 +68,7 @@ class CommandContext:
         self.client.logger.info(kwargs)
         r = Route("POST", "/interactions/{application_id}/{interaction_token}/callback", application_id=self.client_id,
                   interaction_token=self.token)
-        return await self.client.http.request(r, json={"type": 4, "data": kwargs)
+        return await self.client.http.request(r, json={"type": 4, "data": kwargs})
 
 
 class Option:
