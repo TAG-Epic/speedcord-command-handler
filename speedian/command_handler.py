@@ -83,15 +83,6 @@ class CommandHandler:
             self.logger.warning("Slash command not found!")
             return
 
-        # Add a thinking response
-        interaction_response_data = {"type": 5}
-        if command.silent:
-            interaction_response_data["flags"] = 64
-
-        r = Route("POST", "/interactions/{interaction_id}/{interaction_token}/callback",
-                  interaction_id=interaction_id, interaction_token=token)
-        await self.client.http.request(r, json=interaction_response_data)
-
         new_args = {}
 
         for name, value in parsed_args.items():
