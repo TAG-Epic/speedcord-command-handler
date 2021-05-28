@@ -54,6 +54,7 @@ class CommandContext:
         self.client = params["client"]
         self.disable_mentions = params["disable_mentions"]
         self.client_id = params["client_id"]
+        self.interaction_id = params["interaction_id"]
 
         self.message = MessageContext(self.client, params["data"])
 
@@ -66,7 +67,7 @@ class CommandContext:
         if self.command.silent:
             kwargs["flags"] = 64
         self.client.logger.info(kwargs)
-        r = Route("POST", "/interactions/{application_id}/{interaction_token}/callback", application_id=self.client_id,
+        r = Route("POST", "/interactions/{interaction_id}/{interaction_token}/callback", interaction_id=self.interaction_id,
                   interaction_token=self.token)
         return await self.client.http.request(r, json={"type": 4, "data": kwargs})
 
