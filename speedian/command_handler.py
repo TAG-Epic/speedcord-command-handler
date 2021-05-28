@@ -94,7 +94,7 @@ class CommandHandler:
 
         self.logger.debug("Command %s was ran" % command.name)
         context = CommandContext(command=command, token=token, params=parsed_args, client=self.client, data=data,
-                                 disable_mentions=self.disable_mentions, client_id=self.client_id)
+                                 disable_mentions=self.disable_mentions, client_id=self.client_id, interaction_id=interaction_id)
         try:
             await command.func(command.cog, context, **new_args)
         except Exception as e:
